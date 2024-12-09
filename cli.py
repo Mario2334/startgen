@@ -12,6 +12,9 @@ from haystack.utils import Secret
 
 project_path = os.environ.get('PROJECT_PATH')
 
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+DEVSEARCH_API_KEY = os.environ.get('DEVSEARCH_API_KEY')
+
 if project_path is None:
     project_path = os.getcwd()
 
@@ -31,10 +34,10 @@ def generate_boilerplate(description):
         Validate the json and correct it"""
         "Generate boilerplate for a project described as: {{description}}"
     )
-    web_search = SerperDevWebSearch(api_key=Secret.from_token("7b6c39e6676c504bf04618a9800d6d381b540226"), top_k=2)
+    web_search = SerperDevWebSearch(api_key=Secret.from_token(DEVSEARCH_API_KEY), top_k=2)
 
     pipe.add_component(instance=PromptBuilder(template=prompt_template), name="prompt_builder")
-    pipe.add_component("llm", instance=OpenAIGenerator(api_key=Secret.from_token(""),
+    pipe.add_component("llm", instance=OpenAIGenerator(api_key=Secret.from_token(OPENAI_API_KEY),
                                                        model='gpt-4o'))
     pipe.connect("prompt_builder", "llm")
     pipe.connect("prompt_builder", "llm")
@@ -81,7 +84,7 @@ def create_files_from_structure(directory_structure, parent_dir):
                 pass  # Empty file
 
 def extract_project_structure(answer):
-    client = OpenAIGenerator(model="gpt-3.5-turbo", api_key=Secret.from_token(""))
+    client = OpenAIGenerator(model="gpt-3.5-turbo", api_key=Secret.from_token(OPENAI_API_KEY))
     template = f"""
     Return as JSON.
     Convert project structure to json map from this query, only write code:
