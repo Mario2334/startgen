@@ -7,7 +7,7 @@ Usage:
 
 from setuptools import setup
 
-APP = ['cli.py']
+APP = ['startgen.py']
 DATA_FILES = []
 OPTIONS = {}
 
