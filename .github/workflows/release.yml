@@ -30,17 +30,17 @@ jobs:
       - name: Build CLI Executable
         run: |
           mkdir -p dist
-          GOOS=darwin GOARCH=amd64 go build -o dist/startgen-darwin-amd64
-          GOOS=linux GOARCH=amd64 go build -o dist/startgen-linux-amd64
-          GOOS=windows GOARCH=amd64 go build -o dist/startgen-windows-amd64.exe
+          GOOS=darwin GOARCH=amd64 go build -o dist/darwin/startgen
+          GOOS=linux GOARCH=amd64 go build -o dist/linux/startgen
+          GOOS=windows GOARCH=amd64 go build -o dist/windows/startgen.exe
 
       # Archive binaries
       - name: Archive Executables
         run: |
           cd dist
-          zip startgen-darwin-amd64.zip startgen-darwin-amd64
-          zip startgen-linux-amd64.zip startgen-linux-amd64
-          zip startgen-windows-amd64.zip startgen-windows-amd64.exe
+          zip startgen-darwin-amd64.zip darwin/startgen
+          zip startgen-linux-amd64.zip linux/startgen
+          zip startgen-windows-amd64.zip windows/startgen.exe
 
       # Create GitHub Release and Upload Assets
       - name: Create GitHub Release
