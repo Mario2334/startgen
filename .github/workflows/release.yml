@@ -57,9 +57,9 @@ jobs:
       - name: Generate SHA256 Checksums
         run: |
           cd dist
-          shasum -a 256 startgen-darwin-amd64 > startgen-darwin-amd64.sha256
-          shasum -a 256 startgen-linux-amd64 > startgen-linux-amd64.sha256
-          shasum -a 256 startgen-windows-amd64.exe > startgen-windows-amd64.sha256
+          shasum -a 256 startgen-darwin-amd64.zip > startgen-darwin-amd64.sha256
+          shasum -a 256 startgen-linux-amd64.zip > startgen-linux-amd64.sha256
+          shasum -a 256 startgen-windows-amd64.zip > startgen-windows-amd64.sha256
 
       # Upload the Checksums
       - name: Upload Checksums
