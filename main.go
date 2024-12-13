@@ -6,6 +6,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/briandowns/spinner"
+	"github.com/spf13/pflag"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,8 +15,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"time"
-
-	"github.com/briandowns/spinner"
 )
 
 var (
@@ -156,12 +156,11 @@ func createFilesFromStructure(structure map[string]interface{}, parentDir string
 
 func main() {
 	// Parse CLI arguments
-	outputDir := flag.String("output-dir", ".", "Directory to save the generated boilerplate.")
-	print(outputDir)
-	flag.Parse()
+	outputDir := pflag.StringP("output-dir", "o", ".", "Directory to save the generated boilerplate")
+	pflag.Parse()
 
 	// Positional argument for the project description
-	args := flag.Args()
+	args := pflag.Args()
 	if len(args) < 1 {
 		fmt.Println("❌ Error: Please provide a project description as a positional argument.")
 		flag.Usage()
@@ -182,6 +181,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	if len(boilerplate.ProjectStructure) == 0 {
+		fmt.Printf("❌ Error generating boilerplate: %v\n\n", "No project structure found in the chat response.")
+		os.Exit(1)
+	}
+
+	var projectName string
+	for key, _ := range boilerplate.ProjectStructure {
+		projectName = key
+		break // Exit the loop after the first iteration
+	}
+
+	projectPath := filepath.Join(*outputDir, projectName)
+
 	//Create files from structure
 	err = createFilesFromStructure(boilerplate.ProjectStructure, *outputDir)
 	if err != nil {
@@ -199,5 +211,12 @@ func main() {
 		}
 	}
 
-	fmt.Println("🚀 Project files have been generated successfully!")
+	fmt.Printf("\n")
+	fmt.Printf("🎉 Success! Your Project Has Been Generated 🚀\n")
+	fmt.Printf("--------------------------------------------\n")
+	fmt.Printf("🔸 Project Name: %s\n", projectName)
+	fmt.Printf("🔸 Project Path: %s\n", projectPath)
+	fmt.Printf("--------------------------------------------\n")
+	fmt.Printf("You can now navigate to the project path and start building your tool. Happy coding! 💻✨\n")
+	fmt.Printf("\n")
 }
