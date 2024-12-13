@@ -53,44 +53,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Update Homebrew Formula
-      - name: Update Homebrew Formula
+      # Generate SHA256 Checksums
+      - name: Generate SHA256 Checksums
         run: |
-          repo="homebrew-startgen" # Your Homebrew tap repository
-          formula_path="startgen.rb"
+          cd dist
+          shasum -a 256 startgen-darwin-amd64 > startgen-darwin-amd64.sha256
+          shasum -a 256 startgen-linux-amd64 > startgen-linux-amd64.sha256
+          shasum -a 256 startgen-windows-amd64.exe > startgen-windows-amd64.sha256
 
-          # Calculate SHA256 for the macOS tarball
-          darwin_sha256=$(shasum -a 256 dist/startgen-darwin-amd64.zip | awk '{ print $1 }')
-          linux_sha256=$(shasum -a 256 dist/startgen-linux-amd64.zip | awk '{ print $1 }')
-
-          # Clone the Homebrew tap repository
-          git clone https://github.com/mario2334/homebrew-startgen
-          cd $repo
-
-          # Update the formula file
-          cat > $formula_path <<EOL
-          class Startgen < Formula
-            desc "A CLI tool to generate boilerplate projects using natural language"
-            homepage "https://github.com/${{ github.repository }}"
-            url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/startgen-darwin-amd64.zip"
-            sha256 "$darwin_sha256"
-            version "${{ github.ref_name }}"
-          
-            def install
-              bin.install "startgen-darwin-amd64" => "startgen"
-            end
-          
-            test do
-              system "#{bin}/startgen", "--version"
-            end
-          end
-          EOL
-
-          # Push the changes
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add $formula_path
-          git commit -m "Update Homebrew formula for version ${{ github.ref_name }}"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Upload the Checksums
+      - name: Upload Checksums
+        uses: actions/upload-artifact@v3
+        with:
+          name: sha256-checksums
+          path: dist/*.sha256
