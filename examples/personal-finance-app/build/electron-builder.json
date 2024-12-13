@@ -1,0 +1,10 @@
+{
+  "appId": "com.example.personal-finance-app",
+  "files": ["**/*"],
+  "mac": {
+    "target": "dmg"
+  },
+  "win": {
+    "target": "nsis"
+  }
+}
