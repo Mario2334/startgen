@@ -12,32 +12,29 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-
-	//"path/filepath"
 	"time"
 
 	"github.com/briandowns/spinner"
 )
 
 var (
-	openAIAPIKey    string
-	devSearchAPIKey string
+	openAIAPIKey string
 )
 
-// Structure for the Message field inside Choices
+// Message Structure for the Message field inside Choices
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-// Structure for individual Choice
+// Choice Structure for individual Choice
 type Choice struct {
 	Index        int     `json:"index"`
 	Message      Message `json:"message"`
 	FinishReason string  `json:"finish_reason,omitempty"`
 }
 
-// Main structure to represent the entire JSON
+// AssistantResponse Main structure to represent the entire JSON
 type AssistantResponse struct {
 	ID                string   `json:"id"`
 	Object            string   `json:"object"`
@@ -54,7 +51,6 @@ type BoilerplateResponse struct {
 
 func init() {
 	openAIAPIKey = os.Getenv("OPENAI_API_KEY")
-	devSearchAPIKey = os.Getenv("DEVSEARCH_API_KEY")
 
 	if openAIAPIKey == "" {
 		fmt.Println("❌ Error: The environment variable 'OPENAI_API_KEY' is not set. Please set it to use the OpenAI API.")
@@ -160,23 +156,25 @@ func createFilesFromStructure(structure map[string]interface{}, parentDir string
 
 func main() {
 	// Parse CLI arguments
-	description := flag.String("description", "", "Describe your project in plain English.")
 	outputDir := flag.String("output-dir", ".", "Directory to save the generated boilerplate.")
 	print(outputDir)
 	flag.Parse()
 
-	if *description == "" {
-		fmt.Println("❌ Error: Please provide a project description.")
+	// Positional argument for the project description
+	args := flag.Args()
+	if len(args) < 1 {
+		fmt.Println("❌ Error: Please provide a project description as a positional argument.")
 		flag.Usage()
 		os.Exit(1)
 	}
+	description := args[0]
 
 	// Display progress spinner
 	spin := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	spin.Start()
 	spin.Suffix = " Generating boilerplate..."
 
-	boilerplate, err := generateBoilerplate(*description)
+	boilerplate, err := generateBoilerplate(description)
 	print(boilerplate)
 	spin.Stop()
 	if err != nil {
