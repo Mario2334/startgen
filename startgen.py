@@ -3,12 +3,15 @@ import json
 import re
 import os
 import sys
+from time import sleep
+
+from yaspin import yaspin
 from haystack import Pipeline
 from haystack.components.builders import PromptBuilder
 from haystack.components.generators import OpenAIGenerator
 from haystack.components.websearch import SerperDevWebSearch
 from haystack.utils import Secret
-
+from alive_progress import alive_bar
 
 # project_path = os.environ.get('PROJECT_PATH')
 
@@ -16,7 +19,7 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 DEVSEARCH_API_KEY = os.environ.get('DEVSEARCH_API_KEY')
 
 if not OPENAI_API_KEY:
-    print("Warning: The environment variable 'OPENAI_API_KEY' is not set. Please set it to use the OpenAI API.")
+    print("❌ Error: The environment variable 'OPENAI_API_KEY' is not set. Please set it to use the OpenAI API.")
     sys.exit(1)  # Exit if the API key is missing
 
 def generate_boilerplate(description):
@@ -42,6 +45,7 @@ def generate_boilerplate(description):
                                                        model='o1-preview'))
     pipe.connect("prompt_builder", "llm")
     pipe.connect("prompt_builder", "llm")
+
     if DEVSEARCH_API_KEY:
         pipe.add_component("search", web_search)
         main_answer = pipe.run({"search":{"query":description}, "prompt_builder": {"description": description}})
@@ -108,17 +112,34 @@ def write_file_from_response(path, text, base_dir):
 def main():
     parser = argparse.ArgumentParser(description="StartGen - AI-powered boilerplate generator.")
     parser.add_argument("prompt", type=str, help="Describe your project in plain English.")
-    parser.add_argument("--output-dir", type=str, help="Directory to save the generated boilerplate.")
+    parser.add_argument("--output-dir", type=str, required=False  ,help="Directory to save the generated boilerplate.")
 
     args = parser.parse_args()
 
     output_dir= args.output_dir if args.output_dir else os.getcwd()
 
-    print("Processing your request...")
-    boilerplate = generate_boilerplate(args.prompt)
+    print("🔄 Processing your request...")
+
+    with alive_bar(5, title="Initializing components") as bar:
+        for _ in range(5):
+            sleep(0.5)  # Simulate work
+            bar()  # Increment progress
+
+    with yaspin(text="Generating boilerplate...", color="cyan") as spinner:
+        try:
+            boilerplate = generate_boilerplate(args.prompt)
+            if boilerplate:
+                spinner.text = "Boilerplate generated successfully!"
+                spinner.ok("✔")  # Spinner success
+            else:
+                spinner.text = "Failed to generate boilerplate."
+                spinner.fail("✘")  # Spinner failure
+        except Exception as e:
+            spinner.text = f"Error: {e}"
+            spinner.fail("✘")
 
     if boilerplate:
-        print("\nGenerated Boilerplate:\n")
+        print("\n✅ Boilerplate generation successful! Here are the details:\n")
         print(boilerplate)
 
         code_struct = boilerplate['project_structure']
@@ -132,6 +153,10 @@ def main():
         for code_file in code_files.keys():
             write_file_from_response(code_file, code_files[code_file], output_dir)
 
+        print("🚀 Project files have been generated successfully!")
+
+    else:
+        print("❌ Boilerplate generation failed! Please check your input and try again.")
 
 
 
