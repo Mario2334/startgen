@@ -1,2 +1,4 @@
 haystack-ai
 pyinstaller
+yaspin
+alive-progress
