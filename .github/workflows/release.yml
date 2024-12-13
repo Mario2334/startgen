@@ -1,17 +1,16 @@
-name: Build and Release StartGen CLI
+name: Homebrew Release
 
 on:
   push:
     tags:
-      - "v*.*.*" # Trigger on version tags like v1.0.0
+      - "v*.*.*" # Trigger on version tags like v0.1.0
 
 jobs:
-  build:
-    name: Build and Release Go CLI
-    runs-on: macos-latest
+  release:
+    name: Build and Release Homebrew Formula
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       # Checkout the code
       - name: Checkout Code
@@ -21,44 +20,77 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.23"
-
-      # Cache dependencies
-      - name: Cache Go Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version: "1.19"
 
       # Install dependencies
       - name: Install Dependencies
         run: go mod tidy
 
-      # Build the executable
+      # Build binaries for all platforms
       - name: Build CLI Executable
         run: |
-          mkdir -p release
-          GOOS=linux GOARCH=amd64 go build -o release/startgen-linux-amd64
-          GOOS=windows GOARCH=amd64 go build -o release/startgen-windows-amd64.exe
-          GOOS=darwin GOARCH=amd64 go build -o release/startgen-darwin-amd64
+          mkdir -p dist
+          GOOS=darwin GOARCH=amd64 go build -o dist/startgen-darwin-amd64
+          GOOS=linux GOARCH=amd64 go build -o dist/startgen-linux-amd64
+          GOOS=windows GOARCH=amd64 go build -o dist/startgen-windows-amd64.exe
 
-      # Archive the executables
-      - name: Create Release Archives
+      # Archive binaries
+      - name: Archive Executables
         run: |
-          cd release
+          cd dist
+          zip startgen-darwin-amd64.zip startgen-darwin-amd64
           zip startgen-linux-amd64.zip startgen-linux-amd64
           zip startgen-windows-amd64.zip startgen-windows-amd64.exe
-          zip startgen-darwin-amd64.zip startgen-darwin-amd64
 
       # Create GitHub Release and Upload Assets
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/startgen-linux-amd64.zip
-            release/startgen-windows-amd64.zip
-            release/startgen-darwin-amd64.zip
+            dist/startgen-darwin-amd64.zip
+            dist/startgen-linux-amd64.zip
+            dist/startgen-windows-amd64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Update Homebrew Formula
+      - name: Update Homebrew Formula
+        run: |
+          repo="homebrew-tap" # Your Homebrew tap repository
+          formula_path="startgen.rb"
+
+          # Calculate SHA256 for the macOS tarball
+          darwin_sha256=$(shasum -a 256 dist/startgen-darwin-amd64.zip | awk '{ print $1 }')
+          linux_sha256=$(shasum -a 256 dist/startgen-linux-amd64.zip | awk '{ print $1 }')
+
+          # Clone the Homebrew tap repository
+          git clone https://github.com/${{ github.repository_owner }}/${repo}.git
+          cd $repo
+
+          # Update the formula file
+          cat > $formula_path <<EOL
+          class Startgen < Formula
+            desc "A CLI tool to generate boilerplate projects using natural language"
+            homepage "https://github.com/${{ github.repository }}"
+            url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/startgen-darwin-amd64.zip"
+            sha256 "$darwin_sha256"
+            version "${{ github.ref_name }}"
+          
+            def install
+              bin.install "startgen-darwin-amd64" => "startgen"
+            end
+          
+            test do
+              system "#{bin}/startgen", "--version"
+            end
+          end
+          EOL
+
+          # Push the changes
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add $formula_path
+          git commit -m "Update Homebrew formula for version ${{ github.ref_name }}"
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
