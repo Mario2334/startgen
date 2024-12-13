@@ -1,4 +1,0 @@
-# chatbot-app/backend/requirements.txt
-
-Flask==2.0.1
-openai==0.10.2
