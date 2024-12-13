@@ -8,7 +8,9 @@ on:
 jobs:
   build:
     name: Build and Release Go CLI
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       # Checkout the code
