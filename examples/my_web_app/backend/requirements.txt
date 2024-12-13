@@ -1,0 +1,5 @@
+Flask
+Flask_SQLAlchemy
+Flask_Migrate
+Flask_JWT_Extended
+psycopg2-binary

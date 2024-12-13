@@ -6,23 +6,18 @@ import sys
 from haystack import Pipeline
 from haystack.components.builders import PromptBuilder
 from haystack.components.generators import OpenAIGenerator
-# from haystack.components.websearch import SerperDevWebSearch
+from haystack.components.websearch import SerperDevWebSearch
 from haystack.utils import Secret
 
 
-project_path = os.environ.get('PROJECT_PATH')
+# project_path = os.environ.get('PROJECT_PATH')
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-# DEVSEARCH_API_KEY = os.environ.get('DEVSEARCH_API_KEY')
+DEVSEARCH_API_KEY = os.environ.get('DEVSEARCH_API_KEY')
 
 if not OPENAI_API_KEY:
     print("Warning: The environment variable 'OPENAI_API_KEY' is not set. Please set it to use the OpenAI API.")
     sys.exit(1)  # Exit if the API key is missing
-
-if not project_path:
-    print(
-        "Warning: The environment variable 'PROJECT_PATH' is not set. Using the current working directory as the project path.")
-    project_path = os.getcwd()
 
 def generate_boilerplate(description):
     pipe = Pipeline()
@@ -40,20 +35,21 @@ def generate_boilerplate(description):
         Validate the json and correct it"""
         "Generate boilerplate for a project described as: {{description}}"
     )
-    # web_search = SerperDevWebSearch(api_key=Secret.from_token(DEVSEARCH_API_KEY), top_k=2)
+    web_search = SerperDevWebSearch(api_key=Secret.from_token(DEVSEARCH_API_KEY), top_k=2)
 
     pipe.add_component(instance=PromptBuilder(template=prompt_template), name="prompt_builder")
     pipe.add_component("llm", instance=OpenAIGenerator(api_key=Secret.from_token(OPENAI_API_KEY),
-                                                       model='gpt-4o-mini'))
+                                                       model='o1-preview'))
     pipe.connect("prompt_builder", "llm")
     pipe.connect("prompt_builder", "llm")
-    # pipe.add_component("search", web_search)
+    if DEVSEARCH_API_KEY:
+        pipe.add_component("search", web_search)
+        main_answer = pipe.run({"search":{"query":description}, "prompt_builder": {"description": description}})
+    else:
+        main_answer = pipe.run({"prompt_builder": {"description": description}})
 
-    # Generate the boilerplate code
-    # main_answer = pipe.run({"search":{"query":description}, "prompt_builder": {"description": description}})
-    main_answer = pipe.run({"prompt_builder": {"description": description}})
-    main_answer = main_answer.get("llm",{}).get('replies',[])[0]
-    js = get_json_from_openai_response(main_answer)
+    ai_answer = main_answer.get("llm",{}).get('replies',[])[0]
+    js = get_json_from_openai_response(ai_answer)
 
     #
     # with open('/Users/sanket/projects/startgen/startgen_output/boilerplate.txt', 'r') as fin:
@@ -63,7 +59,6 @@ def generate_boilerplate(description):
     return js
 
 def get_json_from_openai_response(text):
-    json_response = None
     try:
         json_response = json.loads(text)
     except json.decoder.JSONDecodeError:
@@ -104,8 +99,8 @@ def extract_project_structure(answer):
     # Parse the matched JSON string into a Python dictionary
     return data_dict
 
-def write_file_from_response(path, text):
-    file_path = os.path.join(project_path, path)
+def write_file_from_response(path, text, base_dir):
+    file_path = os.path.join(base_dir, path)
     with open(file_path, 'w') as f:
         f.write(text)
 
@@ -113,9 +108,11 @@ def write_file_from_response(path, text):
 def main():
     parser = argparse.ArgumentParser(description="StartGen - AI-powered boilerplate generator.")
     parser.add_argument("prompt", type=str, help="Describe your project in plain English.")
-    parser.add_argument("--output-dir", type=str, default="./startgen_output", help="Directory to save the generated boilerplate.")
+    parser.add_argument("--output-dir", type=str, help="Directory to save the generated boilerplate.")
 
     args = parser.parse_args()
+
+    output_dir= args.output_dir if args.output_dir else os.getcwd()
 
     print("Processing your request...")
     boilerplate = generate_boilerplate(args.prompt)
@@ -130,10 +127,10 @@ def main():
         ## Process Project Structure
         # extracted_project_struct = extract_project_structure(code_struct)
         # print(json.dumps(extracted_project_struct, indent=4))
-        create_files_from_structure(code_struct, project_path)
+        create_files_from_structure(code_struct, output_dir)
 
         for code_file in code_files.keys():
-            write_file_from_response(code_file, code_files[code_file])
+            write_file_from_response(code_file, code_files[code_file], output_dir)
 
 
 

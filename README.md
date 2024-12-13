@@ -19,9 +19,10 @@ StartGen takes a natural language prompt—such as:
 1. **Download the Executable:**  
    Grab the `startgen` binary for your system.
    
-2. **Set Environment Variables (if required):**  
+2. **Set Environment Variables:**  
    ```bash
    export OPENAI_API_KEY=your_openai_api_key_here
+   # The Devsearch api is optional for latest results
    export DEVSEARCH_API_KEY=your_devsearch_api_key_here
    ```
 
