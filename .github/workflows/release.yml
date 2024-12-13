@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       # Checkout the code
       - name: Checkout Code
@@ -41,26 +42,10 @@ jobs:
           mv dist/startgen release/
         shell: bash
 
-      # Upload the release asset
+      # Create GitHub Release and Upload Asset
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/startgen
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: "StartGen CLI - ${{ github.ref_name }}"
-          body: |
-            🚀 New release of the StartGen CLI!
-            - Includes the latest updates and features.
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/startgen
-          asset_name: startgen
-          asset_content_type: application/octet-stream
