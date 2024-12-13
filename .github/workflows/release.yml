@@ -47,5 +47,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: release/startgen
+          file_globs: false
+          file_name: startgen
+          content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
