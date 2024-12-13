@@ -64,7 +64,7 @@ jobs:
           linux_sha256=$(shasum -a 256 dist/startgen-linux-amd64.zip | awk '{ print $1 }')
 
           # Clone the Homebrew tap repository
-          git clone https://github.com/${{ github.repository_owner }}/${repo}.git
+          git clone https://github.com/${{ github.repository_owner }}/${{ github.repository }}.git
           cd $repo
 
           # Update the formula file
