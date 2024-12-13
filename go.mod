@@ -1,6 +1,6 @@
 module github.com/Mario2334/startgen
 
-go 1.23.4
+go 1.23
 
 require github.com/briandowns/spinner v1.23.1
 
