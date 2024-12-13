@@ -34,21 +34,30 @@ jobs:
       - name: Build Executable
         run: |
           pyinstaller startgen.py --onefile --name startgen --exclude-module examples
+          chmod +x dist/startgen
+
+      # Rename for Windows (optional step)
+      - name: Rename for OS
+        run: |
+          if [[ "$(uname -s)" == "Linux" ]]; then
+            mv dist/startgen dist/startgen
+          elif [[ "$(uname -s)" == "Darwin" ]]; then
+            mv dist/startgen dist/startgen
+          elif [[ "$(uname -s)" == "MINGW"* ]]; then
+            mv dist/startgen dist/startgen.exe
+          fi
 
       # Archive the executable
       - name: Archive Executable
         run: |
           mkdir -p release
-          mv dist/startgen release/
+          mv dist/startgen* release/
         shell: bash
 
       # Create GitHub Release and Upload Asset
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/startgen
-          file_globs: false
-          file_name: startgen
-          content_type: application/octet-stream
+          files: release/startgen*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
