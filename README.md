@@ -15,6 +15,11 @@
 
 ## 🚧 Installation & Setup 🛠️
 
+**🔑 Set Your Environment Variables:**  
+   ```bash
+   export OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
 ### Using Brew
 
 #### Install From brew
@@ -26,12 +31,6 @@
 ### Using Binary
 1. **🔽 Download the Executable:**  
    - Grab the `startgen` binary for your system.
-
-2. **🔑 Set Your Environment Variables:**  
-   ```bash
-   export OPENAI_API_KEY=your_openai_api_key_here
-   export PROJECT_PATH=your_project_directory
-   ```
 
 3. **🏗️ Make It Executable:**  
    ```bash
