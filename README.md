@@ -15,8 +15,9 @@
 
 ## 🚧 Installation & Setup 🛠️
 
+### Using Binary
 1. **🔽 Download the Executable:**  
-   Grab the `startgen` binary for your system.
+   - Grab the `startgen` binary for your system.
 
 2. **🔑 Set Your Environment Variables:**  
    ```bash
@@ -34,6 +35,13 @@
    ./startgen --help
    ```
 
+### Using Brew
+** Install From brew**
+```bash
+   brew tap Mario2334/startgen
+   brew install startgen
+```
+
 ---
 
 ## ⚙️ How to Use StartGen 🎉
@@ -41,7 +49,7 @@
 Run StartGen with a simple, fun prompt:
 
 ```bash
-./startgen "A React app with a Flask backend and PostgreSQL database."
+startgen -o "<dir>" "A React app with a Flask backend and PostgreSQL database."
 ```
 
 ### **What Happens Next?**  
@@ -54,11 +62,11 @@ Run StartGen with a simple, fun prompt:
 
 ## Options 🛠️
 
-- **`--output-dir <path>`:**  
+- **`-o <path>`:**  
   Specify where your project files will live.  
   Example:
   ```bash
-  ./startgen "A Node.js CLI tool that converts CSV to JSON" --output-dir ./my_project
+  ./startgen startgen -o "<dir>" "A Node.js CLI tool that converts CSV to JSON"
   ```
 
 ---
@@ -70,7 +78,7 @@ Run StartGen with a simple, fun prompt:
 
 2. **🤖 Run StartGen:**  
    ```bash
-   ./startgen "A Python-based data pipeline to process weather data"
+   startgen "A Python-based data pipeline to process weather data"
    ```
 
 3. **📂 Check Your Project Files:**  
@@ -82,7 +90,7 @@ Run StartGen with a simple, fun prompt:
 
 Try a silly prompt:
 ```bash
-./startgen "A Python script to help my dog learn to code."
+startgen "A Python script to help my dog learn to code."
 ```
 🐶 You’ll still get a valid project scaffold… paw-some!
 
