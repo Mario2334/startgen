@@ -15,6 +15,14 @@
 
 ## 🚧 Installation & Setup 🛠️
 
+### Using Brew
+
+#### Install From brew
+```bash
+   brew tap Mario2334/startgen
+   brew install startgen
+```
+
 ### Using Binary
 1. **🔽 Download the Executable:**  
    - Grab the `startgen` binary for your system.
@@ -34,13 +42,6 @@
    ```bash
    ./startgen --help
    ```
-
-### Using Brew
-** Install From brew**
-```bash
-   brew tap Mario2334/startgen
-   brew install startgen
-```
 
 ---
 
