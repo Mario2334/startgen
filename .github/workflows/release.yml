@@ -1,54 +1,112 @@
-name: Build and Release StartGen CLI
+name: Startgen CLI release
 
 on:
   push:
     tags:
-      - "v*.*.*" # Trigger only on version tags like v1.0.0
+      - "v*.*.*" # Trigger on version tags like v0.1.0
 
 jobs:
-  build:
-    name: Build and Release StartGen Executable
+  release:
+    name: Build and Release Homebrew Formula
     runs-on: macos-latest
     permissions:
       contents: write
-
     steps:
       # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      # Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
-          python-version: "3.12"
+          go-version: "1.23"
 
       # Install dependencies
       - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+        run: go mod tidy
 
-      # Build the executable
-      - name: Build Executable
+      # Build binaries for all platforms
+      - name: Build CLI Executable
         run: |
-          pyinstaller startgen.py --onefile --name startgen --exclude-module examples
+          mkdir -p dist
+          GOOS=darwin GOARCH=amd64 go build -o dist/darwin/startgen
+          GOOS=linux GOARCH=amd64 go build -o dist/linux/startgen
+          GOOS=windows GOARCH=amd64 go build -o dist/windows/startgen.exe
 
-      # Archive the executable
-      - name: Archive Executable
+      # Archive binaries
+      - name: Archive Executables
         run: |
-          mkdir -p release
-          mv dist/startgen release/
-        shell: bash
+          cd dist
+          zip startgen-darwin-amd64.zip darwin/startgen
+          zip startgen-linux-amd64.zip linux/startgen
+          zip startgen-windows-amd64.zip windows/startgen.exe
 
-      # Create GitHub Release and Upload Asset
+      # Create GitHub Release and Upload Assets
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/startgen
-          file_globs: false
-          file_name: startgen
-          content_type: application/octet-stream
+          files: |
+            dist/startgen-darwin-amd64.zip
+            dist/startgen-linux-amd64.zip
+            dist/startgen-windows-amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate SHA256 Checksums
+      - name: Generate SHA256 Checksums
+        run: |
+          cd dist
+          shasum -a 256 startgen-darwin-amd64.zip > startgen-darwin-amd64.sha256
+          shasum -a 256 startgen-linux-amd64.zip > startgen-linux-amd64.sha256
+          shasum -a 256 startgen-windows-amd64.zip > startgen-windows-amd64.sha256
+
+      # Upload the Checksums
+      - name: Upload Checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: sha256-checksums
+          path: dist/*.sha256
+
+      # Update Homebrew Tap Formula
+      - name: Update Homebrew Formula
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          # Extract version from tag
+          VERSION=${GITHUB_REF#refs/tags/v}
+          
+          # Get SHA256 for darwin binary
+          SHA256=$(cat dist/startgen-darwin-amd64.sha256 | awk '{print $1}')
+          
+          # Clone the tap repository
+          git clone https://github.com/Mario2334/homebrew-startgen.git tap-repo
+          cd tap-repo
+          
+          # Update the formula
+          cat > Formula/startgen.rb << EOF
+          class Startgen < Formula
+            desc "AI-powered project scaffolding tool"
+            homepage "https://github.com/Mario2334/startgen"
+            url "https://github.com/Mario2334/startgen/releases/download/v${VERSION}/startgen-darwin-amd64.zip"
+            sha256 "${SHA256}"
+            version "${VERSION}"
+          
+            def install
+              bin.install "darwin/startgen"
+            end
+          
+            test do
+              system "#{bin}/startgen", "--help"
+            end
+          end
+          EOF
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Commit and push changes
+          git add Formula/startgen.rb
+          git commit -m "Update startgen to v${VERSION}" || echo "No changes to commit"
+          git push https://x-access-token:${HOMEBREW_GITHUB_API_TOKEN}@github.com/Mario2334/homebrew-startgen.git main
